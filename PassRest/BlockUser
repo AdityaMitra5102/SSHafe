@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+
+from flaskapp import url
+import requests
+import sys
+
+username=sys.argv[1]
+print(f'Blocking {username}')
+print(requests.post(f'https://{url}/blockuser', data={'user':username}).text)
+
+

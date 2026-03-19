@@ -1,0 +1,32 @@
+<html>
+<head>
+  <title>Create Passkey</title>
+
+  <script type="module">
+    import {
+        create,
+        parseCreationOptionsFromJSON,
+    } from '/webauthn-json.browser-ponyfill.js';
+
+    async function start() {
+      let request = await fetch('/api/register/begin?token={{token}}', {
+        method: 'POST',
+      });
+      let json = await request.json();
+      let options = parseCreationOptionsFromJSON(json);
+      let response = await create(options);
+      let result = await fetch('/api/register/complete?token={{token}}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+	body: JSON.stringify(response),
+      });
+
+      let stat = result.ok ? 'successful' : 'unsuccessful';
+      alert('Registration ' + stat);
+    }
+
+    window.start = start;
+    start();
+  </script>
+</head>
+</html>

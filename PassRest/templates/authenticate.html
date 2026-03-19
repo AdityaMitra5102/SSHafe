@@ -1,0 +1,96 @@
+<html>
+<head><title>Change password</title>
+<script type="module">
+ import {
+        get,
+        parseRequestOptionsFromJSON,
+    } from '/webauthn-json.browser-ponyfill.js';
+
+const b64enc = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64dec = s   => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const c = window.crypto.subtle;
+
+
+    async function start() {
+      let request = await fetch('/api/authenticate/begin', {
+        method: 'POST',
+      });
+      if(!request.ok) {
+        throw new Error('No credential available to authenticate!');
+      }
+      let json = await request.json();
+      let options = parseRequestOptionsFromJSON(json);
+      
+      let challenge=options.publicKey.challenge
+      
+     const serverPubKey = await c.importKey(
+    "raw", challenge,
+    { name: "ECDH", namedCurve: "P-256" },
+    false, []   
+  );
+
+  const clientPair = await c.generateKey(
+    { name: "ECDH", namedCurve: "P-256" },
+    true, ["deriveKey", "deriveBits"]
+  );
+  const sharedBits = await c.deriveBits(
+    { name: "ECDH", public: serverPubKey },
+    clientPair.privateKey,
+    256
+  );
+  const hkdfMaterial = await c.importKey(
+    "raw", sharedBits,
+    "HKDF", false, ["deriveKey"]
+  );
+  const finalKey = await c.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: challenge,
+      info: new Uint8Array(0)
+    },
+    hkdfMaterial,
+    { name: "AES-GCM", length: 256 },
+    false, ["encrypt"]
+  );
+
+  const message = prompt("Enter new password: (You will choose username from passkey prompt)");
+  if (!message) return;
+
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const enc = await c.encrypt(
+    { name: "AES-GCM", iv },
+    finalKey,
+    new TextEncoder().encode(message)
+  );
+
+  const clientPubRaw = await c.exportKey("raw", clientPair.publicKey);
+
+  const blob = new Uint8Array(clientPubRaw.byteLength + iv.byteLength + enc.byteLength);
+  blob.set(new Uint8Array(clientPubRaw), 0);
+  blob.set(iv,                           clientPubRaw.byteLength);
+  blob.set(new Uint8Array(enc),          clientPubRaw.byteLength + iv.byteLength);
+
+	let challenge2=blob.buffer;
+	options.publicKey.challenge=challenge2;
+      
+      
+      
+      let response = await get(options);
+      let result = await fetch('/api/authenticate/complete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+	body: JSON.stringify(response),
+      });
+
+      let stat = result.ok ? 'successful' : 'unsuccessful';
+      alert('Password change ' + stat);
+      
+    }
+window.start=start;
+start();
+
+</script>
+</head>
+</html>
+

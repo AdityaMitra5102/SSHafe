@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+
+from flaskapp import url
+import requests
+import sys
+
+username=sys.argv[1]
+print(f'Fetching token for {username}')
+print(requests.post(f'https://{url}/gettoken', data={'user':username}).text)
+
+
