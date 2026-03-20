@@ -27,7 +27,7 @@ def block_user(username):
 		return
 	blocking.append(username)
 	os.system(f'BlockUser {username}')
-	blocked['username']=int(datetime.datetime.now().timestamp())
+	blocked[username]=int(datetime.datetime.now().timestamp())
 	blocking.remove(username)
 
 def monitor():
