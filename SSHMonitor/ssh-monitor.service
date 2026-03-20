@@ -1,0 +1,22 @@
+[Unit]
+Description=SSH Monitor Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/vm_user/SSHMonitor
+ExecStart=/usr/bin/python3 /home/vm_user/SSHMonitor/monitor.py
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Stdout/stderr go to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ssh-monitor
+
+[Install]
+WantedBy=multi-user.target
