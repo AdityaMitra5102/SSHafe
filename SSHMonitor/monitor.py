@@ -4,13 +4,15 @@ import subprocess
 import os
 import threading
 import datetime
+from collections import deque
 authfile='/var/log/auth.log'
 
 blocking=[]
 blocked={}
 
 MAX_BUF=200
-buf=[]
+buf = deque()
+buf_event = threading.Event()
 
 def get_users():
 	users=[]
@@ -53,12 +55,15 @@ def check_buf():
 		try:
 			if len(buf)> MAX_BUF:
 				print('Flushing Buffer')
-				buf=[]
-			while len(buf)>1:
-				linex=buf.pop(0)
+				buf.clear()
+			while len(buf)>0:
+				linex=buf.popleft()
 				check_log_line(linex)
 		except:
 			pass
+		buf_event.clear()
+		buf_event.wait()
+			
 
 def monitor():
 	global buf
@@ -66,6 +71,7 @@ def monitor():
 	print('Monitoring')
 	for linex in proc.stdout:
 		buf.append(linex)
+		buf_event.set()
 		
 if __name__=='__main__':
 	threading.Thread(target=check_buf).start()
