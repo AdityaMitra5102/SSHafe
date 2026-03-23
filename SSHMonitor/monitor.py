@@ -48,6 +48,7 @@ def check_log_line(linex):
 		print('Error processing log')
 
 def check_buf():
+	global buf
 	while True:
 		try:
 			if len(buf)> MAX_BUF:
@@ -60,6 +61,7 @@ def check_buf():
 			pass
 
 def monitor():
+	global buf
 	proc=subprocess.Popen(f'tail -n 0 -f {authfile}'.split(), stdout=subprocess.PIPE)
 	print('Monitoring')
 	for linex in proc.stdout:
