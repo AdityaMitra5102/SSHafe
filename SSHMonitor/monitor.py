@@ -38,7 +38,7 @@ def check_log_line(linex):
 		line=linex.decode(errors='ignore')
 		processed=convert_lines([line])
 		if len(processed)<1:
-			continue
+			return
 		log=processed[0]
 		result=detector.ingest_log(log)
 		if log['prediction']['alert']:
