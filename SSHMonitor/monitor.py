@@ -51,7 +51,7 @@ def check_buf():
 	while True:
 		try:
 			if len(buf)> MAX_BUF:
-				print('Flusing Buffer')
+				print('Flushing Buffer')
 				buf=[]
 			while len(buf)>1:
 				linex=buf.pop(0)
